@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberSlayerCorpz — Internal Operations Desk</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 500 500%22><rect width=%22500%22 height=%22500%22 rx=%22100%22 fill=%22%2318181B%22/><g stroke-width=%2216%22 stroke-linecap=%22square%22><polygon points=%22250,110 360,180 360,320 250,390 140,320 140,180%22 stroke=%22%23FFFFFF%22 fill=%22none%22/><path d=%22M 250 110 V 250 M 360 180 L 250 250 M 140 180 L 250 250%22 stroke=%22%23A1A1AA%22 stroke-width=%2210%22 fill=%22none%22/></g></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Google Sans"', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            base: '#09090B',
+            surface: '#121215',
+            elevated: '#18181B',
+            border: '#27272A',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Google Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: #09090B;
+      color: #FAFAFA;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #09090B; }
+    ::-webkit-scrollbar-thumb { background: #27272A; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3F3F46; }
+  </style>
+</head>
+<body class="min-h-screen bg-base text-zinc-100 antialiased selection:bg-white selection:text-zinc-950">
+
+  <!-- BOOTLOADER SCREEN -->
+  <div id="boot-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-base">
+    <svg class="w-14 h-14 animate-pulse mb-4" viewBox="0 0 500 500">
+      <rect width="500" height="500" rx="100" fill="#18181B" stroke="#27272A" stroke-width="12"/>
+      <g stroke-width="16" stroke-linecap="square">
+        <polygon points="250,110 360,180 360,320 250,390 140,320 140,180" stroke="#FFFFFF" fill="none"/>
+        <path d="M 250 110 V 250 M 360 180 L 250 250 M 140 180 L 250 250" stroke="#A1A1AA" stroke-width="10" fill="none"/>
+      </g>
+    </svg>
+    <p class="text-sm text-zinc-400 tracking-wide">Verifying encrypted session...</p>
+  </div>
+
+  <!-- STRICT AUTH GATE (ZERO GUEST ACCESS) -->
+  <div id="auth-gate" class="hidden min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-base">
+    <div class="w-full max-w-md bg-surface border border-border rounded-2xl p-8 shadow-2xl">
+      <div class="flex items-center gap-3.5 mb-6">
+        <svg class="w-11 h-11 shrink-0" viewBox="0 0 500 500">
+          <rect width="500" height="500" rx="100" fill="#18181B" stroke="#27272A" stroke-width="14"/>
+          <g stroke-width="16" stroke-linecap="square">
+            <polygon points="250,110 360,180 360,320 250,390 140,320 140,180" stroke="#FFFFFF" fill="none"/>
+            <path d="M 250 110 V 250 M 360 180 L 250 250 M 140 180 L 250 250" stroke="#A1A1AA" stroke-width="10" fill="none"/>
+          </g>
+        </svg>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white">CyberSlayerCorpz</h1>
+          <p class="text-xs text-zinc-400">Internal Workspace &amp; Operations Desk</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="grid grid-cols-2 gap-1 p-1 bg-base border border-border rounded-xl mb-6">
+        <button id="tab-signin" onclick="switchAuthTab('signin')" class="py-2 text-xs font-medium rounded-lg bg-elevated text-white shadow">Sign In</button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')" class="py-2 text-xs font-medium rounded-lg text-zinc-400 hover:text-white">Create Account</button>
+      </div>
+
+      <div id="auth-alert" class="hidden mb-4 p-3 rounded-xl text-xs border"></div>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div id="signup-name-field" class="hidden">
+          <label class="block text-xs font-medium text-zinc-300 mb-1.5">Your Full Name</label>
+          <input type="text" id="auth-name" placeholder="e.g., Tanzeem" class="w-full px-3.5 py-2.5 bg-base border border-border rounded-xl text-sm text-white focus:outline-none focus:border-zinc-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1.5">Work Email</label>
+          <input type="email" id="auth-email" required placeholder="you@cyberslayercorpz.dev" class="w-full px-3.5 py-2.5 bg-base border border-border rounded-xl text-sm text-white focus:outline-none focus:border-zinc-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1.5">Password</label>
+          <input type="password" id="auth-password" required minlength="6" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-base border border-border rounded-xl text-sm text-white focus:outline-none focus:border-zinc-500" />
+        </div>
+        <button type="submit" id="auth-submit-btn" class="w-full py-2.5 px-4 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-sm rounded-xl transition">
+          Sign In to Workspace
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-border flex items-center justify-between text-xs text-zinc-500">
+        <span>RLS &amp; Trigger Protected</span>
+        <span>v2.4 Hardened</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATED APPLICATION SHELL -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col">
+    <!-- TOP COMMAND BAR -->
+    <header class="sticky top-0 z-30 bg-surface/95 backdrop-blur border-b border-border px-4 lg:px-8 py-3">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <svg class="w-9 h-9 shrink-0" viewBox="0 0 500 500">
+            <rect width="500" height="500" rx="100" fill="#18181B" stroke="#27272A" stroke-width="14"/>
+            <g stroke-width="16" stroke-linecap="square">
+              <polygon points="250,110 360,180 360,320 250,390 140,320 140,180" stroke="#FFFFFF" fill="none"/>
+              <path d="M 250 110 V 250 M 360 180 L 250 250 M 140 180 L 250 250" stroke="#A1A1AA" stroke-width="10" fill="none"/>
+            </g>
+          </svg>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-white tracking-tight">CyberSlayerCorpz</span>
+              <span id="user-role-badge" class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-elevated border border-border text-zinc-300">Member</span>
+            </div>
+            <p id="user-email-display" class="text-xs text-zinc-400"></p>
+          </div>
+        </div>
+
+        <!-- Stack Quick Launchers -->
+        <div class="flex items-center flex-wrap gap-1.5">
+          <a href="https://mail.zoho.in" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-zinc-200 flex items-center gap-1.5 transition">
+            <span>Zoho Mail</span>
+          </a>
+          <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-zinc-200 flex items-center gap-1.5 transition">
+            <span>Vercel</span>
+          </a>
+          <a href="https://github.com/tanzeemrockz" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-zinc-200 flex items-center gap-1.5 transition">
+            <span>GitHub</span>
+          </a>
+          <a href="https://www.spaceship.com/application/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-zinc-200 flex items-center gap-1.5 transition">
+            <span>Spaceship</span>
+          </a>
+          <a id="supabase-console-link" href="https://supabase.com/dashboard/project/jerjcyesegdpbicfhajz" target="_blank" rel="noopener noreferrer" class="hidden px-2.5 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-emerald-400 items-center gap-1.5 transition">
+            <span>Supabase DB</span>
+          </a>
+          <button onclick="openCommsModal()" class="px-2.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs font-medium transition">
+            Quick Drafter
+          </button>
+          <button onclick="signOutUser()" class="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 rounded-lg text-xs font-medium transition">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- PENDING REVIEW ALERT BAR -->
+    <div id="review-alert-banner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 lg:px-8 py-2.5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-xs text-amber-300">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+          <span id="review-alert-text" class="font-medium">Tasks are waiting for review.</span>
+        </div>
+        <button onclick="switchMainTab('reviews')" class="text-xs font-semibold text-amber-200 underline hover:text-white">Open Review Board</button>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="bg-surface border-b border-border px-4 lg:px-8">
+      <div class="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto py-2">
+        <button onclick="switchMainTab('overview')" id="nav-overview" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-zinc-950">Overview</button>
+        <button onclick="switchMainTab('reviews')" id="nav-reviews" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white">Review Board</button>
+        <button onclick="switchMainTab('projects')" id="nav-projects" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white">Projects &amp; Intake</button>
+        <button onclick="switchMainTab('leads')" id="nav-leads" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white">Leads Outreach</button>
+        <button onclick="switchMainTab('clients')" id="nav-clients" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white">Clients Directory</button>
+        <button onclick="switchMainTab('team')" id="nav-team" class="nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white">Team &amp; Roles</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT WORKSPACE -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+
+      <!-- 1. OVERVIEW TAB -->
+      <section id="view-overview" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-surface border border-border rounded-2xl p-5">
+            <p class="text-xs text-zinc-400">Active Projects</p>
+            <p id="kpi-projects" class="text-2xl font-bold text-white mt-1">0</p>
+          </div>
+          <div class="bg-surface border border-border rounded-2xl p-5">
+            <p class="text-xs text-zinc-400">Tasks Needing Review</p>
+            <p id="kpi-reviews" class="text-2xl font-bold text-amber-400 mt-1">0</p>
+          </div>
+          <div class="bg-surface border border-border rounded-2xl p-5">
+            <p class="text-xs text-zinc-400">Active Leads</p>
+            <p id="kpi-leads" class="text-2xl font-bold text-white mt-1">0</p>
+          </div>
+          <div class="bg-surface border border-border rounded-2xl p-5">
+            <p class="text-xs text-zinc-400">Contracted Value / Balance Due</p>
+            <p id="kpi-finance" class="text-lg font-bold text-emerald-400 mt-1">₹0 / ₹0 due</p>
+          </div>
+        </div>
+
+        <!-- My Availability Strip -->
+        <div class="bg-surface border border-border rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-semibold text-white">Your Current Availability Status</h2>
+            <p class="text-xs text-zinc-400">Keep the team updated on what you are doing right now.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateMyStatus('Available')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20">Available</button>
+            <button onclick="updateMyStatus('Working on Project')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 border border-blue-500/30 text-blue-300 hover:bg-blue-500/20">Working on Project</button>
+            <button onclick="updateMyStatus('On Leave')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700">Away / Offline</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. REVIEW PIPELINE TAB ("EVERYONE'S BOARD") -->
+      <section id="view-reviews" class="hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Team Task &amp; Review Pipeline</h2>
+            <p class="text-xs text-zinc-400">Submit finished tasks with a branch or preview link. Only Admins can mark tasks Approved.</p>
+          </div>
+          <button onclick="openTaskModal()" class="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs rounded-xl transition">+ Add Task</button>
+        </div>
+        <div id="tasks-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+      </section>
+
+      <!-- 3. PROJECTS & ASSET INTAKE TAB -->
+      <section id="view-projects" class="hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Projects &amp; 8-Point Asset Intake</h2>
+            <p class="text-xs text-zinc-400">Track stack links, asset completion readiness, and project delivery stages.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSfMF3Inm3AfIOPMHFS1sq2yTuSkACQ6QweBD9RDcf93SqHGeg/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 bg-elevated hover:bg-zinc-800 border border-border text-zinc-200 text-xs font-medium rounded-xl transition">Open Client Intake Form</a>
+            <button id="btn-new-project" onclick="openProjectModal()" class="hidden px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs rounded-xl transition">+ New Project</button>
+          </div>
+        </div>
+        <div id="projects-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- 4. LEADS TRACKER TAB -->
+      <section id="view-leads" class="hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Leads &amp; Outreach Tracker</h2>
+            <p class="text-xs text-zinc-400">Track prospective clients from Reddit, Instagram, Cold Email, and Referrals.</p>
+          </div>
+          <button onclick="openLeadModal()" class="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs rounded-xl transition">+ Log New Lead</button>
+        </div>
+        <div id="leads-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- 5. CLIENTS DIRECTORY TAB -->
+      <section id="view-clients" class="hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Confirmed Clients</h2>
+            <p class="text-xs text-zinc-400">Client directory with 1-click WhatsApp (+91) and Zoho Mail outreach.</p>
+          </div>
+          <button id="btn-new-client" onclick="openClientModal()" class="hidden px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs rounded-xl transition">+ Add Client</button>
+        </div>
+        <div id="clients-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- 6. TEAM & ROLES TAB -->
+      <section id="view-team" class="hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Team Directory &amp; Access Control</h2>
+            <p class="text-xs text-zinc-400">Role assignments and Administrator privileges are strictly enforced by PostgreSQL triggers.</p>
+          </div>
+        </div>
+        <div id="team-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- UNIVERSAL MODAL CONTAINER -->
+  <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div id="modal-content" class="bg-surface border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl my-8"></div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. SUPABASE CONFIGURATION & STRICT SECURITY HELPERS
+    // =========================================================================
+    const SUPABASE_URL = 'https://jerjcyesegdpbicfhajz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcmpjeWVzZWdkcGJpY2ZoYWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzU5NzEsImV4cCI6MjEwNzY1MTk3MX0.Sd3yMYKVtuJQjSrF_9orA4kqtIdGo-gXMCdzmLHFVxw';
+    const INTAKE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfMF3Inm3AfIOPMHFS1sq2yTuSkACQ6QweBD9RDcf93SqHGeg/viewform?usp=header';
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let state = {
+      user: null,
+      profile: null,
+      isAdmin: false,
+      profiles: [],
+      leads: [],
+      clients: [],
+      projects: [],
+      tasks: [],
+      authMode: 'signin'
+    };
+
+    const INTAKE_ITEMS = [
+      { key: 'logo', label: 'Vector / Transparent PNG Logo' },
+      { key: 'images', label: 'High-Res Hero & Lookbook Photos' },
+      { key: 'bio', label: 'About Business Bio & Story' },
+      { key: 'catalog', label: 'Service / Product List & Pricing' },
+      { key: 'contact', label: 'Phone, Email & Map Location' },
+      { key: 'socials', label: 'Instagram & Social Links' },
+      { key: 'colors', label: 'Brand Color Palette & Fonts' },
+      { key: 'reviews', label: 'Customer Testimonials' }
+    ];
+
+    // STRICT XSS SANITIZER — Escapes HTML entities in all dynamic strings
+    function esc(raw) {
+      if (raw === null || raw === undefined) return '';
+      return String(raw)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // STRICT URL SANITIZER — Blocks javascript: or data: XSS payloads in hrefs
+    function safeUrl(raw) {
+      if (!raw) return '';
+      const trimmed = String(raw).trim();
+      if (/^https?:\/\//i.test(trimmed)) return esc(trimmed);
+      if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(trimmed)) return esc('https://' + trimmed);
+      return '';
+    }
+
+    // INDIAN WHATSAPP PHONE SANITIZER (+91)
+    function formatWhatsAppNumber(raw) {
+      if (!raw) return '';
+      const digits = String(raw).replace(/\D/g, '');
+      if (!digits) return '';
+      if (digits.length === 10) return '91' + digits;
+      return digits;
+    }
+
+    function formatINR(num) {
+      const n = Number(num) || 0;
+      return '₹' + n.toLocaleString('en-IN');
+    }
+
+    // =========================================================================
+    // 2. AUTHENTICATION & SERVER-ENFORCED PROFILE SYNC
+    // =========================================================================
+    function switchAuthTab(mode) {
+      state.authMode = mode;
+      const nameField = document.getElementById('signup-name-field');
+      const btn = document.getElementById('auth-submit-btn');
+      const tabIn = document.getElementById('tab-signin');
+      const tabUp = document.getElementById('tab-signup');
+
+      if (mode === 'signup') {
+        nameField.classList.remove('hidden');
+        btn.textContent = 'Create Workspace Account';
+        tabUp.className = 'py-2 text-xs font-medium rounded-lg bg-elevated text-white shadow';
+        tabIn.className = 'py-2 text-xs font-medium rounded-lg text-zinc-400 hover:text-white';
+      } else {
+        nameField.classList.add('hidden');
+        btn.textContent = 'Sign In to Workspace';
+        tabIn.className = 'py-2 text-xs font-medium rounded-lg bg-elevated text-white shadow';
+        tabUp.className = 'py-2 text-xs font-medium rounded-lg text-zinc-400 hover:text-white';
+      }
+      hideAuthAlert();
+    }
+
+    function showAuthAlert(msg, isError = true) {
+      const box = document.getElementById('auth-alert');
+      box.textContent = msg;
+      box.className = isError
+        ? 'mb-4 p-3 rounded-xl text-xs border bg-red-500/10 border-red-500/30 text-red-300'
+        : 'mb-4 p-3 rounded-xl text-xs border bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+      box.classList.remove('hidden');
+    }
+
+    function hideAuthAlert() {
+      document.getElementById('auth-alert').classList.add('hidden');
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      hideAuthAlert();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const fullName = document.getElementById('auth-name').value.trim();
+
+      if (state.authMode === 'signup') {
+        if (!fullName) return showAuthAlert('Please enter your full name.');
+        const { data, error } = await sb.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } }
+        });
+        if (error) return showAuthAlert(error.message);
+        if (data.session) {
+          await ensureUserProfile(data.user, fullName);
+          await bootWorkspace(data.user);
+        } else {
+          showAuthAlert('Account created! If email confirmation is enabled in Supabase, check your inbox.', false);
+        }
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) return showAuthAlert(error.message);
+        if (data.user) await bootWorkspace(data.user);
+      }
+    }
+
+    // Notice: Client NEVER sends is_admin or role. PostgreSQL trigger assigns it safely.
+    async function ensureUserProfile(user, fallbackName) {
+      const { data: existing } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!existing) {
+        const nameToUse = fallbackName || user.user_metadata?.full_name || user.email.split('@')[0];
+        await sb.from('profiles').insert([{
+          id: user.id,
+          full_name: nameToUse,
+          email: user.email,
+          status: 'Available'
+        }]);
+      }
+    }
+
+    async function signOutUser() {
+      await sb.auth.signOut();
+      window.location.reload();
+    }
+
+    // =========================================================================
+    // 3. WORKSPACE BOOT & REALTIME SYNC
+    // =========================================================================
+    async function bootWorkspace(user) {
+      state.user = user;
+      await ensureUserProfile(user);
+      await loadAllData();
+
+      document.getElementById('boot-screen').classList.add('hidden');
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+
+      setupRealtimeSubscription();
+    }
+
+    async function loadAllData() {
+      const [profRes, leadRes, clientRes, projRes, taskRes] = await Promise.all([
+        sb.from('profiles').select('*').order('created_at', { ascending: true }),
+        sb.from('leads').select('*').order('created_at', { ascending: false }),
+        sb.from('clients').select('*').order('created_at', { ascending: false }),
+        sb.from('projects').select('*').order('created_at', { ascending: false }),
+        sb.from('tasks').select('*').order('created_at', { ascending: false })
+      ]);
+
+      state.profiles = profRes.data || [];
+      state.leads = leadRes.data || [];
+      state.clients = clientRes.data || [];
+      state.projects = projRes.data || [];
+      state.tasks = taskRes.data || [];
+
+      state.profile = state.profiles.find(p => p.id === state.user.id) || null;
+      state.isAdmin = Boolean(state.profile?.is_admin);
+
+      renderHeaderAndPermissions();
+      renderAllViews();
+    }
+
+    function renderHeaderAndPermissions() {
+      const badge = document.getElementById('user-role-badge');
+      const emailEl = document.getElementById('user-email-display');
+      const sbLink = document.getElementById('supabase-console-link');
+      const btnNewProj = document.getElementById('btn-new-project');
+      const btnNewClient = document.getElementById('btn-new-client');
+
+      emailEl.textContent = state.profile ? `${state.profile.full_name} (${state.profile.status})` : state.user.email;
+
+      if (state.isAdmin) {
+        badge.textContent = `${state.profile?.role || 'Admin'} • Admin`;
+        badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300';
+        sbLink.classList.remove('hidden');
+        sbLink.classList.add('flex');
+        btnNewProj.classList.remove('hidden');
+        btnNewClient.classList.remove('hidden');
+      } else {
+        badge.textContent = state.profile?.role || 'Intern';
+        badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-elevated border border-border text-zinc-300';
+        sbLink.classList.add('hidden');
+        btnNewProj.classList.add('hidden');
+        btnNewClient.classList.add('hidden');
+      }
+    }
+
+    function setupRealtimeSubscription() {
+      sb.channel('cyberslayer-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => loadAllData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => loadAllData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadAllData())
+        .subscribe();
+    }
+
+    function switchMainTab(tab) {
+      const tabs = ['overview', 'reviews', 'projects', 'leads', 'clients', 'team'];
+      tabs.forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`nav-${t}`);
+        btn.className = t === tab
+          ? 'nav-btn px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-zinc-950'
+          : 'nav-btn px-3.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-white';
+      });
+    }
+
+    // =========================================================================
+    // 4. RENDERING VIEWS (WITH STRICT XSS ESCAPING)
+    // =========================================================================
+    function renderAllViews() {
+      renderOverview();
+      renderReviewBoard();
+      renderProjects();
+      renderLeads();
+      renderClients();
+      renderTeam();
+    }
+
+    function renderOverview() {
+      const activeProjects = state.projects.filter(p => p.stage !== 'Completed').length;
+      const pendingReviews = state.tasks.filter(t => t.status === 'Needs Review').length;
+      const openLeads = state.leads.filter(l => l.status !== 'Won' && l.status !== 'Lost').length;
+
+      const totalFee = state.projects.reduce((acc, p) => acc + (Number(p.fee_inr) || 0), 0);
+      const totalAdv = state.projects.reduce((acc, p) => acc + (Number(p.advance_inr) || 0), 0);
+      const totalDue = Math.max(0, totalFee - totalAdv);
+
+      document.getElementById('kpi-projects').textContent = activeProjects;
+      document.getElementById('kpi-reviews').textContent = pendingReviews;
+      document.getElementById('kpi-leads').textContent = openLeads;
+      document.getElementById('kpi-finance').textContent = `${formatINR(totalFee)} / ${formatINR(totalDue)} due`;
+
+      const banner = document.getElementById('review-alert-banner');
+      if (pendingReviews > 0) {
+        banner.classList.remove('hidden');
+        document.getElementById('review-alert-text').textContent = `${pendingReviews} task(s) submitted and waiting for Admin review.`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function renderReviewBoard() {
+      const stages = ['To Do', 'In Progress', 'Needs Review', 'Approved'];
+      const board = document.getElementById('tasks-board');
+
+      board.innerHTML = stages.map(stage => {
+        const items = state.tasks.filter(t => t.status === stage);
+        const cards = items.map(t => {
+          const assignee = state.profiles.find(p => p.id === t.assigned_to_id);
+          const proj = state.projects.find(p => p.id === t.project_id);
+          const cleanUrl = safeUrl(t.preview_url);
+
+          return `
+            <div class="bg-base border border-border rounded-xl p-3.5 space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-semibold text-white leading-snug">${esc(t.title)}</p>
+                ${state.isAdmin ? `<button onclick="deleteRecord('tasks', '${esc(t.id)}')" class="text-[11px] text-zinc-500 hover:text-red-400">Delete</button>` : ''}
+              </div>
+              <div class="text-[11px] text-zinc-400 space-y-1">
+                ${proj ? `<p>Project: <span class="text-zinc-200">${esc(proj.title)}</span></p>` : ''}
+                <p>Assigned: <span class="text-zinc-200">${esc(assignee ? assignee.full_name : 'Unassigned')}</span></p>
+              </div>
+              ${cleanUrl ? `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="inline-block text-[11px] text-blue-400 hover:underline">Open Preview / Branch &rarr;</a>` : ''}
+              <div class="pt-2 border-t border-border flex flex-wrap gap-1.5">
+                ${stage !== 'In Progress' && stage !== 'Approved' ? `<button onclick="updateTaskStatus('${esc(t.id)}', 'In Progress')" class="px-2 py-1 bg-elevated hover:bg-zinc-800 rounded text-[11px] text-zinc-300">In Progress</button>` : ''}
+                ${stage !== 'Needs Review' && stage !== 'Approved' ? `<button onclick="updateTaskStatus('${esc(t.id)}', 'Needs Review')" class="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded text-[11px] text-amber-300">Submit for Review</button>` : ''}
+                ${state.isAdmin && stage !== 'Approved' ? `<button onclick="updateTaskStatus('${esc(t.id)}', 'Approved')" class="px-2 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded text-[11px] text-emerald-300 font-medium">Approve &amp; Done</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white">${esc(stage)}</span>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-elevated text-zinc-400">${items.length}</span>
+            </div>
+            <div class="space-y-2.5">${cards || '<p class="text-xs text-zinc-500 py-4 text-center">No tasks in this stage</p>'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderProjects() {
+      const grid = document.getElementById('projects-grid');
+      if (!state.projects.length) {
+        grid.innerHTML = `<div class="col-span-full bg-surface border border-border rounded-2xl p-8 text-center text-xs text-zinc-400">No projects added yet.</div>`;
+        return;
+      }
+
+      grid.innerHTML = state.projects.map(p => {
+        const client = state.clients.find(c => c.id === p.client_id);
+        const checklist = p.intake_checklist || {};
+        const doneCount = INTAKE_ITEMS.filter(i => Boolean(checklist[i.key])).length;
+        const pct = Math.round((doneCount / INTAKE_ITEMS.length) * 100);
+
+        const ghUrl = safeUrl(p.github_url);
+        const vcUrl = safeUrl(p.vercel_url);
+        const dmUrl = safeUrl(p.domain_url);
+        const drUrl = safeUrl(p.drive_url);
+
+        const due = Math.max(0, (Number(p.fee_inr) || 0) - (Number(p.advance_inr) || 0));
+
+        return `
+          <div class="bg-surface border border-border rounded-2xl p-5 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-elevated border border-border text-zinc-300">${esc(p.stage)}</span>
+                <h3 class="text-base font-bold text-white mt-2">${esc(p.title)}</h3>
+                <p class="text-xs text-zinc-400">Client: ${esc(client ? client.company_name : 'Internal / Unlinked')}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="openIntakeModal('${esc(p.id)}')" class="px-3 py-1.5 bg-elevated hover:bg-zinc-800 border border-border rounded-lg text-xs text-white font-medium">Intake (${pct}%)</button>
+                ${state.isAdmin ? `<button onclick="deleteRecord('projects', '${esc(p.id)}')" class="text-xs text-zinc-500 hover:text-red-400">Delete</button>` : ''}
+              </div>
+            </div>
+
+            <!-- Asset Progress Bar -->
+            <div>
+              <div class="flex justify-between text-[11px] text-zinc-400 mb-1">
+                <span>Asset Readiness (${doneCount}/8 received)</span>
+                <span>${pct}%</span>
+              </div>
+              <div class="w-full h-2 bg-base rounded-full overflow-hidden border border-border">
+                <div class="h-full bg-emerald-400 transition-all" style="width: ${pct}%"></div>
+              </div>
+            </div>
+
+            <!-- Stack Links -->
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              ${ghUrl ? `<a href="${ghUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-base border border-border rounded-lg text-[11px] text-zinc-300 hover:text-white">GitHub Repo</a>` : ''}
+              ${vcUrl ? `<a href="${vcUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-base border border-border rounded-lg text-[11px] text-zinc-300 hover:text-white">Vercel Staging</a>` : ''}
+              ${dmUrl ? `<a href="${dmUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-base border border-border rounded-lg text-[11px] text-zinc-300 hover:text-white">Live Domain</a>` : ''}
+              ${drUrl ? `<a href="${drUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-[11px] text-emerald-300 hover:bg-emerald-500/20">Client Drive Folder</a>` : ''}
+            </div>
+
+            <!-- Stage & Finance Footer -->
+            <div class="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div>
+                <span class="text-zinc-400">Fee:</span> <span class="font-semibold text-white">${formatINR(p.fee_inr)}</span>
+                <span class="text-zinc-500 mx-1">•</span>
+                <span class="text-amber-300">Balance: ${formatINR(due)}</span>
+              </div>
+              <select onchange="updateProjectStage('${esc(p.id)}', this.value)" class="px-2.5 py-1 bg-base border border-border rounded-lg text-xs text-white">
+                ${['Asset Intake', 'In Development', 'Client Review', 'DNS / Launch', 'Completed'].map(s => `<option value="${s}" ${p.stage === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLeads() {
+      const list = document.getElementById('leads-list');
+      if (!state.leads.length) {
+        list.innerHTML = `<div class="col-span-full bg-surface border border-border rounded-2xl p-8 text-center text-xs text-zinc-400">No leads logged yet.</div>`;
+        return;
+      }
+
+      list.innerHTML = state.leads.map(l => {
+        const waNum = formatWhatsAppNumber(l.phone);
+        return `
+          <div class="bg-surface border border-border rounded-2xl p-5 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[11px] px-2 py-0.5 rounded bg-elevated text-zinc-300 border border-border">${esc(l.source)}</span>
+                <h3 class="text-sm font-bold text-white mt-2">${esc(l.name)}</h3>
+                <p class="text-xs text-zinc-400">${esc(l.company || 'Independent')}</p>
+              </div>
+              <span class="text-xs font-semibold text-emerald-400">${formatINR(l.estimated_value_inr)}</span>
+            </div>
+            ${l.notes ? `<p class="text-xs text-zinc-300 bg-base p-2.5 rounded-lg border border-border">${esc(l.notes)}</p>` : ''}
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-border">
+              <select onchange="updateLeadStatus('${esc(l.id)}', this.value)" class="px-2.5 py-1 bg-base border border-border rounded-lg text-xs text-white">
+                ${['Cold Contact', 'In Discussion', 'Proposal Sent', 'Won', 'Lost'].map(s => `<option value="${s}" ${l.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+              <div class="flex items-center gap-1.5">
+                ${waNum ? `<a href="https://wa.me/${waNum}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-emerald-500/15 text-emerald-300 rounded text-[11px] font-medium">WhatsApp</a>` : ''}
+                ${state.isAdmin ? `<button onclick="deleteRecord('leads', '${esc(l.id)}')" class="text-[11px] text-zinc-500 hover:text-red-400 ml-1">Delete</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderClients() {
+      const list = document.getElementById('clients-list');
+      if (!state.clients.length) {
+        list.innerHTML = `<div class="col-span-full bg-surface border border-border rounded-2xl p-8 text-center text-xs text-zinc-400">No clients added yet.</div>`;
+        return;
+      }
+
+      list.innerHTML = state.clients.map(c => {
+        const waNum = formatWhatsAppNumber(c.phone);
+        const intakeMsg = encodeURIComponent(`Hi ${c.contact_person}, welcome to CyberSlayerCorpz! Please fill out our asset intake form here so we can kick off your build: ${INTAKE_FORM_URL}`);
+        return `
+          <div class="bg-surface border border-border rounded-2xl p-5 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white">${esc(c.company_name)}</h3>
+                <p class="text-xs text-zinc-400">Contact: ${esc(c.contact_person)}</p>
+              </div>
+              ${state.isAdmin ? `<button onclick="deleteRecord('clients', '${esc(c.id)}')" class="text-xs text-zinc-500 hover:text-red-400">Delete</button>` : ''}
+            </div>
+            <div class="text-xs text-zinc-300 space-y-1">
+              ${c.email ? `<p>Email: ${esc(c.email)}</p>` : ''}
+              ${c.phone ? `<p>Phone: ${esc(c.phone)}</p>` : ''}
+            </div>
+            <div class="pt-3 border-t border-border flex flex-wrap gap-2">
+              ${waNum ? `<a href="https://wa.me/${waNum}?text=${intakeMsg}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs font-medium">WhatsApp Intake Link</a>` : ''}
+              <a href="https://mail.zoho.in" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-elevated border border-border text-zinc-200 rounded-lg text-xs">Zoho Mail</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTeam() {
+      const list = document.getElementById('team-list');
+      list.innerHTML = state.profiles.map(m => {
+        const isSelf = m.id === state.user.id;
+        return `
+          <div class="bg-surface border border-border rounded-2xl p-5 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-bold text-white">${esc(m.full_name)}</h3>
+                  ${m.is_admin ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-semibold">Admin</span>` : ''}
+                </div>
+                <p class="text-xs text-zinc-400">${esc(m.email)}</p>
+              </div>
+              <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-elevated border border-border text-zinc-300">${esc(m.status || 'Available')}</span>
+            </div>
+
+            ${state.isAdmin ? `
+              <div class="pt-3 border-t border-border flex items-center justify-between gap-2">
+                <select onchange="adminUpdateMemberRole('${esc(m.id)}', this.value)" class="px-2.5 py-1.5 bg-base border border-border rounded-lg text-xs text-white">
+                  ${['Founder', 'Developer', 'Designer', 'Sales Outreach', 'Intern'].map(r => `<option value="${r}" ${m.role === r ? 'selected' : ''}>${r}</option>`).join('')}
+                </select>
+                ${!isSelf ? `
+                  <button onclick="adminTogglePrivilege('${esc(m.id)}', ${!m.is_admin})" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border ${m.is_admin ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'}">
+                    ${m.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                  </button>
+                ` : `<span class="text-[11px] text-zinc-500">Your Account</span>`}
+              </div>
+            ` : `
+              <div class="pt-2 border-t border-border text-xs text-zinc-400">
+                Role: <span class="text-zinc-200 font-medium">${esc(m.role || 'Intern')}</span>
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 5. SECURE DATABASE MUTATIONS (BACKED BY POSTGRES RLS & TRIGGERS)
+    // =========================================================================
+    async function updateMyStatus(status) {
+      const { error } = await sb.from('profiles').update({ status }).eq('id', state.user.id);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function adminUpdateMemberRole(memberId, role) {
+      if (!state.isAdmin) return alert('Access Denied: Admins only.');
+      const { error } = await sb.from('profiles').update({ role }).eq('id', memberId);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function adminTogglePrivilege(memberId, makeAdmin) {
+      if (!state.isAdmin) return alert('Access Denied: Admins only.');
+      if (memberId === state.user.id) return alert('You cannot revoke your own Admin status.');
+      const { error } = await sb.from('profiles').update({ is_admin: makeAdmin }).eq('id', memberId);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function updateTaskStatus(taskId, status) {
+      if (status === 'Approved' && !state.isAdmin) {
+        return alert('Only Admins can approve tasks.');
+      }
+      const { error } = await sb.from('tasks').update({ status }).eq('id', taskId);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function updateProjectStage(projectId, stage) {
+      const { error } = await sb.from('projects').update({ stage }).eq('id', projectId);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function updateLeadStatus(leadId, status) {
+      const { error } = await sb.from('leads').update({ status }).eq('id', leadId);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    async function deleteRecord(table, id) {
+      if (!state.isAdmin) return alert('Access Denied: Only Admins can delete records.');
+      if (!confirm('Are you sure you want to permanently delete this record?')) return;
+      const { error } = await sb.from(table).delete().eq('id', id);
+      if (error) return alert(error.message);
+      await loadAllData();
+    }
+
+    // =========================================================================
+    // 6. MODALS (TASKS, PROJECTS, INTAKE CHECKLIST, LEADS, CLIENTS, COMMS)
+    // =========================================================================
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+    }
+
+    function openTaskModal() {
+      const projOpts = state.projects.map(p => `<option value="${esc(p.id)}">${esc(p.title)}</option>`).join('');
+      const memberOpts = state.profiles.map(m => `<option value="${esc(m.id)}">${esc(m.full_name)} (${esc(m.role)})</option>`).join('');
+
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-4">Add Team Task</h3>
+        <form onsubmit="submitTask(event)" class="space-y-3.5 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1">Task Title</label>
+            <input type="text" id="t-title" required placeholder="e.g., Build responsive mobile navbar" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Project</label>
+            <select id="t-proj" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white">
+              <option value="">General / Internal</option>
+              ${projOpts}
+            </select>
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Assign To</label>
+            <select id="t-user" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white">
+              ${memberOpts}
+            </select>
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Vercel Preview or GitHub Branch URL (Optional)</label>
+            <input type="url" id="t-url" placeholder="https://..." class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div class="flex justify-end gap-2 pt-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-elevated rounded-xl text-zinc-300">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-xl">Create Task</button>
+          </div>
+        </form>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function submitTask(e) {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('t-title').value.trim(),
+        project_id: document.getElementById('t-proj').value || null,
+        assigned_to_id: document.getElementById('t-user').value || null,
+        preview_url: document.getElementById('t-url').value.trim(),
+        status: 'To Do'
+      };
+      const { error } = await sb.from('tasks').insert([payload]);
+      if (error) return alert(error.message);
+      closeModal();
+      await loadAllData();
+    }
+
+    function openProjectModal() {
+      if (!state.isAdmin) return alert('Only Admins can create projects.');
+      const clientOpts = state.clients.map(c => `<option value="${esc(c.id)}">${esc(c.company_name)}</option>`).join('');
+
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-4">Create New Project</h3>
+        <form onsubmit="submitProject(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1">Project Title</label>
+            <input type="text" id="p-title" required placeholder="e.g., Urban Cafe Digital Lookbook" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Client</label>
+            <select id="p-client" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white">
+              <option value="">Select Client...</option>
+              ${clientOpts}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">Total Fee (INR ₹)</label>
+              <input type="number" id="p-fee" value="0" min="0" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Advance Paid (INR ₹)</label>
+              <input type="number" id="p-adv" value="0" min="0" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">GitHub Repo URL</label>
+              <input type="url" id="p-gh" placeholder="https://github.com/..." class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Vercel Preview URL</label>
+              <input type="url" id="p-vc" placeholder="https://....vercel.app" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">Custom Domain URL</label>
+              <input type="url" id="p-dm" placeholder="https://..." class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Client Google Drive Assets URL</label>
+              <input type="url" id="p-dr" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-elevated rounded-xl text-zinc-300">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-xl">Save Project</button>
+          </div>
+        </form>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function submitProject(e) {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('p-title').value.trim(),
+        client_id: document.getElementById('p-client').value || null,
+        fee_inr: Number(document.getElementById('p-fee').value) || 0,
+        advance_inr: Number(document.getElementById('p-adv').value) || 0,
+        github_url: document.getElementById('p-gh').value.trim(),
+        vercel_url: document.getElementById('p-vc').value.trim(),
+        domain_url: document.getElementById('p-dm').value.trim(),
+        drive_url: document.getElementById('p-dr').value.trim(),
+        stage: 'Asset Intake'
+      };
+      const { error } = await sb.from('projects').insert([payload]);
+      if (error) return alert(error.message);
+      closeModal();
+      await loadAllData();
+    }
+
+    function openIntakeModal(projectId) {
+      const p = state.projects.find(x => x.id === projectId);
+      if (!p) return;
+      const checklist = p.intake_checklist || {};
+
+      const checkRows = INTAKE_ITEMS.map(item => `
+        <label class="flex items-center gap-3 p-2.5 bg-base border border-border rounded-xl cursor-pointer">
+          <input type="checkbox" id="chk-${item.key}" ${checklist[item.key] ? 'checked' : ''} class="w-4 h-4 accent-white" />
+          <span class="text-xs text-zinc-200">${esc(item.label)}</span>
+        </label>
+      `).join('');
+
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-1">8-Point Asset Intake Checklist</h3>
+        <p class="text-xs text-zinc-400 mb-4">${esc(p.title)}</p>
+        <form onsubmit="submitIntakeUpdate(event, '${esc(p.id)}')" class="space-y-3">
+          <div class="grid grid-cols-1 gap-2">${checkRows}</div>
+          <div class="pt-2">
+            <label class="block text-xs text-zinc-400 mb-1">Client Google Drive Folder Link</label>
+            <input type="url" id="intake-drive" value="${esc(p.drive_url || '')}" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 bg-base border border-border rounded-xl text-xs text-white" />
+          </div>
+          <div class="flex justify-end gap-2 pt-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-elevated rounded-xl text-xs text-zinc-300">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-xl text-xs">Save Intake Status</button>
+          </div>
+        </form>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function submitIntakeUpdate(e, projectId) {
+      e.preventDefault();
+      const updatedChecklist = {};
+      INTAKE_ITEMS.forEach(item => {
+        updatedChecklist[item.key] = document.getElementById(`chk-${item.key}`).checked;
+      });
+      const drive_url = document.getElementById('intake-drive').value.trim();
+      const { error } = await sb.from('projects').update({
+        intake_checklist: updatedChecklist,
+        drive_url
+      }).eq('id', projectId);
+      if (error) return alert(error.message);
+      closeModal();
+      await loadAllData();
+    }
+
+    function openLeadModal() {
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-4">Log Outreach Lead</h3>
+        <form onsubmit="submitLead(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1">Contact Name</label>
+            <input type="text" id="l-name" required class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">Business / Company</label>
+              <input type="text" id="l-comp" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Source</label>
+              <select id="l-src" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white">
+                <option>Reddit</option>
+                <option>Instagram</option>
+                <option>Cold Email</option>
+                <option>Referral</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">WhatsApp / Phone</label>
+              <input type="text" id="l-phone" placeholder="10-digit mobile" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Est. Value (INR ₹)</label>
+              <input type="number" id="l-val" value="5000" min="0" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Notes</label>
+            <textarea id="l-notes" rows="2" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white"></textarea>
+          </div>
+          <div class="flex justify-end gap-2 pt-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-elevated rounded-xl text-zinc-300">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-xl">Save Lead</button>
+          </div>
+        </form>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function submitLead(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('l-name').value.trim(),
+        company: document.getElementById('l-comp').value.trim(),
+        source: document.getElementById('l-src').value,
+        phone: document.getElementById('l-phone').value.trim(),
+        estimated_value_inr: Number(document.getElementById('l-val').value) || 0,
+        notes: document.getElementById('l-notes').value.trim(),
+        status: 'Cold Contact'
+      };
+      const { error } = await sb.from('leads').insert([payload]);
+      if (error) return alert(error.message);
+      closeModal();
+      await loadAllData();
+    }
+
+    function openClientModal() {
+      if (!state.isAdmin) return alert('Only Admins can add confirmed clients.');
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-4">Add Confirmed Client</h3>
+        <form onsubmit="submitClient(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1">Company / Brand Name</label>
+            <input type="text" id="c-comp" required class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Contact Person</label>
+            <input type="text" id="c-person" required class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-zinc-400 mb-1">Email</label>
+              <input type="email" id="c-email" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1">Phone (WhatsApp)</label>
+              <input type="text" id="c-phone" placeholder="9876543210" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-elevated rounded-xl text-zinc-300">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-xl">Add Client</button>
+          </div>
+        </form>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+    }
+
+    async function submitClient(e) {
+      e.preventDefault();
+      const payload = {
+        company_name: document.getElementById('c-comp').value.trim(),
+        contact_person: document.getElementById('c-person').value.trim(),
+        email: document.getElementById('c-email').value.trim(),
+        phone: document.getElementById('c-phone').value.trim()
+      };
+      const { error } = await sb.from('clients').insert([payload]);
+      if (error) return alert(error.message);
+      closeModal();
+      await loadAllData();
+    }
+
+    function openCommsModal() {
+      document.getElementById('modal-content').innerHTML = `
+        <h3 class="text-base font-bold text-white mb-1">WhatsApp (+91) &amp; Zoho Quick Drafter</h3>
+        <p class="text-xs text-zinc-400 mb-4">Generate pre-filled client messages in one click.</p>
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1">Recipient Phone (10-digit Indian mobile or full number)</label>
+            <input type="text" id="comm-phone" placeholder="9876543210" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white" />
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Preset Message</label>
+            <select id="comm-preset" onchange="fillCommPreset()" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white">
+              <option value="intake">1. Send Client Onboarding &amp; Asset Form</option>
+              <option value="pitch">2. Cold Outreach Pitch (Mobile Lookbook)</option>
+              <option value="staging">3. Vercel Staging Preview Ready</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1">Message Text</label>
+            <textarea id="comm-body" rows="4" class="w-full px-3 py-2 bg-base border border-border rounded-xl text-white"></textarea>
+          </div>
+          <div class="flex flex-wrap justify-end gap-2 pt-2">
+            <button type="button" onclick="closeModal()" class="px-3.5 py-2 bg-elevated rounded-xl text-zinc-300">Close</button>
+            <button type="button" onclick="copyCommText()" class="px-3.5 py-2 bg-elevated border border-border rounded-xl text-white">Copy Text for Zoho</button>
+            <button type="button" onclick="sendWhatsAppComm()" class="px-4 py-2 bg-emerald-500 text-zinc-950 font-semibold rounded-xl">Launch WhatsApp</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      fillCommPreset();
+    }
+
+    function fillCommPreset() {
+      const preset = document.getElementById('comm-preset').value;
+      const box = document.getElementById('comm-body');
+      if (preset === 'intake') {
+        box.value = `Hi! Excited to get started on your website with CyberSlayerCorpz. Please submit your brand logos, photos, and details on our onboarding form here: ${INTAKE_FORM_URL}`;
+      } else if (preset === 'pitch') {
+        box.value = `Hi! We build fast, mobile-first digital lookbooks and websites for growing brands at CyberSlayerCorpz. Would love to share a quick preview idea for your business!`;
+      } else {
+        box.value = `Hi! Your live staging preview is ready for review. Please test it on your mobile phone and let us know if you'd like any tweaks before we point your domain!`;
+      }
+    }
+
+    function copyCommText() {
+      const text = document.getElementById('comm-body').value;
+      navigator.clipboard.writeText(text);
+      alert('Copied! Opening Zoho Mail...');
+      window.open('https://mail.zoho.in', '_blank', 'noopener,noreferrer');
+    }
+
+    function sendWhatsAppComm() {
+      const rawPhone = document.getElementById('comm-phone').value;
+      const num = formatWhatsAppNumber(rawPhone);
+      if (!num) return alert('Enter a valid phone number first.');
+      const text = encodeURIComponent(document.getElementById('comm-body').value);
+      window.open(`https://wa.me/${num}?text=${text}`, '_blank', 'noopener,noreferrer');
+    }
+
+    // =========================================================================
+    // 7. INITIALIZE SESSION CHECK ON LOAD
+    // =========================================================================
+    (async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) {
+        await bootWorkspace(session.user);
+      } else {
+        document.getElementById('boot-screen').classList.add('hidden');
+        document.getElementById('auth-gate').classList.remove('hidden');
+      }
+    })();
+  </script>
+</body>
+</html>
